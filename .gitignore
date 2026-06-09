@@ -1,0 +1,9 @@
+# Claude Code 本機設定（不上傳）
+.claude/settings.local.json
+
+# PyRevit 版 SRS（另一個專案）
+SRS_CREATE_PLAN_VIEWS_PYREVIT.md
+
+# Windows
+Thumbs.db
+Desktop.ini
