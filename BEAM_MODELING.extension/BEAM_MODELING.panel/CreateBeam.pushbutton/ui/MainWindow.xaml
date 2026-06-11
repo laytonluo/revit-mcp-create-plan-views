@@ -1,0 +1,259 @@
+<Window
+    x:Class="MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="結構樑翻模 — BEAM_MODELING"
+    Width="900" Height="680"
+    MinWidth="780" MinHeight="560"
+    WindowStartupLocation="CenterScreen"
+    ResizeMode="CanResizeWithGrip">
+
+    <Window.Resources>
+        <!-- 標籤統一寬度 -->
+        <Style x:Key="LabelStyle" TargetType="Label">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="0,0,6,0"/>
+        </Style>
+        <!-- 警告列背景色 -->
+        <Style x:Key="WarningRowStyle" TargetType="DataGridRow">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsManual}" Value="True">
+                    <Setter Property="Background" Value="#FFF3E0"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+
+        <!-- ══════════════════════════════════════
+             頂部工具列
+        ══════════════════════════════════════ -->
+        <ToolBar DockPanel.Dock="Top" Height="36">
+            <Button x:Name="BtnAnalyze" Content="▶ 執行分析" Width="100"
+                    Click="BtnAnalyze_Click" ToolTip="讀取 CAD 並偵測梁中心線"/>
+            <Separator/>
+            <Button x:Name="BtnConfirm" Content="✔ 確認建立" Width="100"
+                    Click="BtnConfirm_Click" IsEnabled="False"
+                    ToolTip="依確認表建立結構樑"/>
+        </ToolBar>
+
+        <!-- ══════════════════════════════════════
+             底部狀態列
+        ══════════════════════════════════════ -->
+        <StatusBar DockPanel.Dock="Bottom" Height="26">
+            <StatusBarItem>
+                <TextBlock x:Name="TxtStatus" Text="就緒" Margin="4,0"/>
+            </StatusBarItem>
+        </StatusBar>
+
+        <!-- ══════════════════════════════════════
+             主內容：左右分割
+             左：Step 1 設定面板
+             右：Step 2 預覽確認表
+        ══════════════════════════════════════ -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="320" MinWidth="260"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="*" MinWidth="400"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ─────────────────────────────────
+                 LEFT PANEL — Step 1 設定
+            ───────────────────────────────── -->
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="10">
+
+                    <!-- § CAD 連結 -->
+                    <GroupBox Header="CAD 連結" Margin="0,0,0,8">
+                        <StackPanel Margin="6">
+                            <Label Content="選取 CAD 連結：" Style="{StaticResource LabelStyle}"/>
+                            <ComboBox x:Name="CmbCadLink" Height="26"
+                                      SelectionChanged="CmbCadLink_SelectionChanged"
+                                      ToolTip="目前視圖中偵測到的 CAD 連結（ImportInstance）"/>
+                            <TextBlock x:Name="TxtCurrentLevel" Margin="0,4,0,0"
+                                       FontSize="11" Foreground="Gray"
+                                       Text="目前樓層：—"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- § 圖層對應 -->
+                    <GroupBox Header="圖層對應" Margin="0,0,0,8">
+                        <Grid Margin="6">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <!-- 標題列 -->
+                                <RowDefinition Height="Auto"/>
+                                <!-- 大梁垂直 -->
+                                <RowDefinition Height="Auto"/>
+                                <!-- 大梁水平 -->
+                                <RowDefinition Height="Auto"/>
+                                <!-- 小梁 -->
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70"/>
+                                <!-- 組別 -->
+                                <ColumnDefinition Width="*"/>
+                                <!-- 梁線 -->
+                                <ColumnDefinition Width="*"/>
+                                <!-- 編號 -->
+                                <ColumnDefinition Width="*"/>
+                                <!-- 尺寸 -->
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 標題 -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="" FontSize="10"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="梁線" FontSize="10" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="編號" FontSize="10" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Row="0" Grid.Column="3" Text="尺寸" FontSize="10" HorizontalAlignment="Center"/>
+
+                            <!-- 大梁（垂直） -->
+                            <Label Grid.Row="1" Grid.Column="0" Content="大梁(垂直)" FontSize="10"
+                                   VerticalAlignment="Center" Padding="0"/>
+                            <ComboBox x:Name="CmbLayerGirderVLine"  Grid.Row="1" Grid.Column="1" Height="24" Margin="2"/>
+                            <ComboBox x:Name="CmbLayerGirderVLabel" Grid.Row="1" Grid.Column="2" Height="24" Margin="2"/>
+                            <ComboBox x:Name="CmbLayerGirderVSize"  Grid.Row="1" Grid.Column="3" Height="24" Margin="2"/>
+
+                            <!-- 大梁（水平） -->
+                            <Label Grid.Row="2" Grid.Column="0" Content="大梁(水平)" FontSize="10"
+                                   VerticalAlignment="Center" Padding="0"/>
+                            <ComboBox x:Name="CmbLayerGirderHLine"  Grid.Row="2" Grid.Column="1" Height="24" Margin="2"/>
+                            <ComboBox x:Name="CmbLayerGirderHLabel" Grid.Row="2" Grid.Column="2" Height="24" Margin="2"/>
+                            <ComboBox x:Name="CmbLayerGirderHSize"  Grid.Row="2" Grid.Column="3" Height="24" Margin="2"/>
+
+                            <!-- 小梁 -->
+                            <Label Grid.Row="3" Grid.Column="0" Content="小梁" FontSize="10"
+                                   VerticalAlignment="Center" Padding="0"/>
+                            <ComboBox x:Name="CmbLayerBeamLine"  Grid.Row="3" Grid.Column="1" Height="24" Margin="2"/>
+                            <ComboBox x:Name="CmbLayerBeamLabel" Grid.Row="3" Grid.Column="2" Height="24" Margin="2"/>
+                            <ComboBox x:Name="CmbLayerBeamSize"  Grid.Row="3" Grid.Column="3" Height="24" Margin="2"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- § 尺寸來源 -->
+                    <GroupBox Header="尺寸來源" Margin="0,0,0,8">
+                        <StackPanel Margin="6">
+                            <!-- ① 從圖層讀取（預設） -->
+                            <RadioButton x:Name="RbSizeFromLayer" Content="① 從圖層讀取（預設）"
+                                         IsChecked="True" GroupName="SizeSource"
+                                         Checked="SizeSource_Changed"/>
+                            <!-- ② 查對照表（CSV） -->
+                            <RadioButton x:Name="RbSizeFromCsv" Content="② 查對照表（CSV）"
+                                         GroupName="SizeSource" Margin="0,4,0,0"
+                                         Checked="SizeSource_Changed"/>
+                            <StackPanel x:Name="PanelCsv" Orientation="Horizontal"
+                                        Margin="16,4,0,0" Visibility="Collapsed">
+                                <TextBox x:Name="TxtCsvPath" Width="160" Height="24"
+                                         IsReadOnly="True" VerticalContentAlignment="Center"/>
+                                <Button Content="瀏覽…" Width="50" Height="24" Margin="4,0,0,0"
+                                        Click="BtnBrowseCsv_Click"/>
+                            </StackPanel>
+                            <!-- ③ 全手動選取 -->
+                            <RadioButton x:Name="RbSizeManual" Content="③ 全手動選取"
+                                         GroupName="SizeSource" Margin="0,4,0,0"
+                                         Checked="SizeSource_Changed"/>
+                            <TextBlock Margin="16,2,0,0" FontSize="10" Foreground="Gray"
+                                       Text="（Step 2 顯示兩平行梁線間距作為梁寬）"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- 分隔線 -->
+            <GridSplitter Grid.Column="1" Width="5"
+                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                          Background="#DDDDDD"/>
+
+            <!-- ─────────────────────────────────
+                 RIGHT PANEL — Step 2 預覽確認表
+            ───────────────────────────────── -->
+            <DockPanel Grid.Column="2" Margin="8,8,8,4">
+
+                <!-- 確認表工具列 -->
+                <ToolBar DockPanel.Dock="Top" Height="32" Margin="0,0,0,4">
+                    <Button x:Name="BtnAddType" Content="＋ 新增梁類型" Width="110"
+                            Click="BtnAddType_Click" IsEnabled="False"/>
+                    <Separator/>
+                    <!-- 梁編號寫入實例參數 -->
+                    <CheckBox x:Name="ChkWriteParam" Content="將梁編號填入實例參數"
+                              VerticalAlignment="Center" Margin="4,0"
+                              IsEnabled="False"
+                              Checked="ChkWriteParam_Changed"
+                              Unchecked="ChkWriteParam_Changed"/>
+                    <ComboBox x:Name="CmbTargetParam" Width="120" Height="24"
+                              Margin="4,0" IsEnabled="False"
+                              ToolTip="選擇要寫入梁編號的文字類型實例參數"/>
+                </ToolBar>
+
+                <!-- 視圖中心線圖例說明 -->
+                <Border DockPanel.Dock="Top"
+                        Background="#F5F5F5" BorderBrush="#DDDDDD" BorderThickness="0,0,0,1"
+                        Padding="8,4" Margin="0,0,0,4">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="視圖中心線圖例：" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <!-- 綠色圖例 -->
+                        <Rectangle Width="12" Height="12" Fill="#00DC00"
+                                   VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="已配對標籤" FontSize="11" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <!-- 紅色圖例 -->
+                        <Rectangle Width="12" Height="12" Fill="#FF3C3C"
+                                   VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="無對應標籤（請手動選取族群類型）" FontSize="11" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- DataGrid — 預覽確認表 -->
+                <DataGrid x:Name="DgBeams"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          SelectionMode="Single"
+                          GridLinesVisibility="Horizontal"
+                          AlternatingRowBackground="#F9F9F9"
+                          RowStyle="{StaticResource WarningRowStyle}"
+                          IsReadOnly="False">
+                    <DataGrid.Columns>
+
+                        <!-- 梁編號 -->
+                        <DataGridTextColumn Header="梁編號" Binding="{Binding BeamId}"
+                                            Width="70" IsReadOnly="True"/>
+
+                        <!-- 方向/類別 -->
+                        <DataGridTextColumn Header="方向/類別" Binding="{Binding Direction}"
+                                            Width="90" IsReadOnly="True"/>
+
+                        <!-- 偵測尺寸 -->
+                        <DataGridTextColumn Header="偵測尺寸" Binding="{Binding DetectedSize}"
+                                            Width="80" IsReadOnly="True"/>
+
+                        <!-- 對應族群類型 -->
+                        <DataGridTemplateColumn Header="對應族群類型" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding FamilyTypeName}" VerticalAlignment="Center" Margin="4,0"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                            <DataGridTemplateColumn.CellEditingTemplate>
+                                <DataTemplate>
+                                    <ComboBox ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.AllFamilyTypes}"
+                                              SelectedItem="{Binding FamilyTypeName, UpdateSourceTrigger=PropertyChanged}"
+                                              Height="24"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellEditingTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- 狀態 -->
+                        <DataGridTextColumn Header="狀態" Binding="{Binding StatusText}"
+                                            Width="60" IsReadOnly="True"/>
+
+                    </DataGrid.Columns>
+                </DataGrid>
+
+            </DockPanel>
+
+        </Grid>
+
+    </DockPanel>
+</Window>
